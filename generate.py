@@ -47,9 +47,8 @@ def train(data, model):
                     saver.save(sess, checkpoint_path, global_step=n)
                     sys.stdout.write('\n')
                     print("model saved to {}".format(checkpoint_path))
-                    print(generate_text(data, sess, model))
-            sys.stdout.write('\n')            
-
+                    # print(generate_text(data, sess, model))
+            sys.stdout.write('\n')
 
 def generate_text(data, sess, model, begin_char=''):
     poem = begin_char
