@@ -5,8 +5,9 @@ import sys
 import os
 import time
 import numpy as np
-import collections
 import tensorflow as tf
+from model import Model
+from data_loader import Data
 
 BEGIN_CHAR = '^'
 END_CHAR = '$'
@@ -15,8 +16,14 @@ MAX_LENGTH = 100
 MIN_LENGTH = 10
 max_words = 3000
 epochs = 50
-data_file = 'data/poetry/tang(simplified).txt'
-save_dir = 'model'
+
+data_dir = 'data/poetry/'
+input_file = 'tang(simplified).txt'
+vocab_file = 'vocab_tang(simplified).pkl'
+tensor_file = 'tensor_tang(simplified).npy'
+
+model_dir = 'model/poetry/'
+
 
 def train(data, model):
     with tf.Session() as sess:
@@ -36,10 +43,10 @@ def train(data, model):
                     .format(epoch * data.n_size + batche,
                             epochs * data.n_size, epoch, train_loss)
                 sys.stdout.write(info)
-                sys.stdout.flush()
+                # sys.stdout.flush()
                 if (epoch * data.n_size + batche) % 1000 == 0 \
                         or (epoch == epochs-1 and batche == data.n_size-1):
-                    checkpoint_path = os.path.join(save_dir, 'model.ckpt')
+                    checkpoint_path = os.path.join(model_dir, 'model.ckpt')
                     saver.save(sess, checkpoint_path, global_step=n)
                     sys.stdout.write('\n')
                     print("model saved to {}".format(checkpoint_path))
@@ -61,7 +68,7 @@ def sample(data, model, head=u''):
         sess.run(tf.global_variables_initializer())
 
         saver = tf.train.Saver(tf.global_variables())
-        model_file = tf.train.latest_checkpoint(save_dir)
+        model_file = tf.train.latest_checkpoint(model_dir)
         # print(model_file)
         saver.restore(sess, model_file)
 
@@ -120,12 +127,12 @@ def main():
 
     if args.mode == 'sample':
         infer = True  # True
-        data = Data(data_file)
+        data = Data(data_dir, input_file, vocab_file, tensor_file)
         model = Model(data=data, infer=infer)
         print(sample(data, model, head=args.head))
     elif args.mode == 'train':
         infer = False
-        data = Data(data_file)
+        data = Data(data_dir, input_file, vocab_file, tensor_file)
         model = Model(data=data, infer=infer)
         print(train(data, model))
     else:
