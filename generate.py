@@ -47,16 +47,36 @@ def train(data, model):
                     saver.save(sess, checkpoint_path, global_step=n)
                     sys.stdout.write('\n')
                     print("model saved to {}".format(checkpoint_path))
-            sys.stdout.write('\n')
+                    print(generate_text(data, sess, model))
+            sys.stdout.write('\n')            
+
+
+def generate_text(data, sess, model, begin_char=''):
+    poem = begin_char
+    head = BEGIN_CHAR
+    x = np.array([list(map(data.char2id, head))])
+    state = sess.run(model.cell.zero_state(1, tf.float32))
+    feed_dict = {model.x_tf: x, model.initial_state: state}
+    [probs, state] = sess.run([model.probs, model.final_state], feed_dict)
+    word = to_word(probs[-1])
+    while word != END_CHAR:
+        poem += word
+        x = np.zeros((1, 1))
+        x[0, 0] = data.char2id(word)
+        [probs, state] = sess.run([model.probs, model.final_state],
+                                  {model.x_tf: x, model.initial_state: state})
+        word = to_word(probs[-1])
+    print(poem)
+    return poem
+
+def to_word(weights):
+    t = np.cumsum(weights)
+    s = np.sum(weights)
+    sa = int(np.searchsorted(t, np.random.rand(1) * s))
+    return data.id2char(sa)
 
 
 def sample(data, model, head=u''):
-    def to_word(weights):
-        t = np.cumsum(weights)
-        s = np.sum(weights)
-        sa = int(np.searchsorted(t, np.random.rand(1) * s))
-        return data.id2char(sa)
-
     for word in head:
         if word not in data.words:
             return u'{} 不在字典中'.format(word)
@@ -88,21 +108,7 @@ def sample(data, model, head=u''):
                 poem += word
             return poem[1:]
         else:
-            poem = ''
-            head = BEGIN_CHAR
-            x = np.array([list(map(data.char2id, head))])
-            state = sess.run(model.cell.zero_state(1, tf.float32))
-            feed_dict = {model.x_tf: x, model.initial_state: state}
-            [probs, state] = sess.run([model.probs, model.final_state], feed_dict)
-            word = to_word(probs[-1])
-            while word != END_CHAR:
-                poem += word
-                x = np.zeros((1, 1))
-                x[0, 0] = data.char2id(word)
-                [probs, state] = sess.run([model.probs, model.final_state],
-                                          {model.x_tf: x, model.initial_state: state})
-                word = to_word(probs[-1])
-            return poem
+            return generate_text(data, sess, model)
 
 
 def main():
