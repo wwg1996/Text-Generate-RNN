@@ -9,12 +9,9 @@ import tensorflow as tf
 from model import Model
 from data_loader import Data
 
-BEGIN_CHAR = '^'
-END_CHAR = '$'
+BEGIN_CHAR = '<'
+END_CHAR = '>'
 UNKNOWN_CHAR = '*'
-MAX_LENGTH = 100
-MIN_LENGTH = 10
-max_words = 3000
 epochs = 50
 
 data_dir = 'data/poetry/'
@@ -39,7 +36,7 @@ def train(data, model):
                 pointer += 1
                 train_loss, _, _ = sess.run([model.cost, model.final_state, model.train_op], feed_dict=feed_dict)
                 sys.stdout.write('\r')
-                info = "{}/{} (epoch {}) | train_loss {:.3f}" \
+                info = "{}/{} (epoch {}) | train_loss {:.5f}" \
                     .format(epoch * data.n_size + batche,
                             epochs * data.n_size, epoch, train_loss)
                 sys.stdout.write(info)
@@ -69,7 +66,6 @@ def sample(data, model, head=u''):
 
         saver = tf.train.Saver(tf.global_variables())
         model_file = tf.train.latest_checkpoint(model_dir)
-        # print(model_file)
         saver.restore(sess, model_file)
 
         if head:

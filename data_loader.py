@@ -30,13 +30,21 @@ class Data:
         self.create_batches()
         print(self.words_size)
 
+    def id2char(idx):
+        return self.vocab_id[idx]
+
+    def char2id(word):
+        return self.vocab[word]
+
     def load_preprocessed(self, vocab_file, tensor_file):
         with open(vocab_file, 'rb') as f:
             self.chars = cPickle.load(f)
         self.vocab_size = len(self.chars)
         self.vocab = dict(zip(self.chars, range(len(self.chars))))
+        self.vocab_id = dict(zip(range(len(self.chars)), self.chars))
         self.texts_vector = np.load(tensor_file)
         self.words_size = len(self.chars)
+
 
     def preprocess(self, input_file, vocab_file, tensor_file):
         def handle(line):
@@ -56,6 +64,7 @@ class Data:
         self.words_size = len(self.words)
 
         self.vocab = dict(zip(self.words, range(len(self.words))))
+        self.vocab_id = dict(zip(range(len(self.words)), self.words))
         with open(vocab_file, 'wb') as f:
             cPickle.dump(self.words, f)
         self.texts_vector = np.array([
