@@ -9,12 +9,9 @@ import tensorflow as tf
 from model import Model
 from data_loader import Data
 
-BEGIN_CHAR = '^'
-END_CHAR = '$'
+BEGIN_CHAR = '<'
+END_CHAR = '>'
 UNKNOWN_CHAR = '*'
-MAX_LENGTH = 100
-MIN_LENGTH = 10
-max_words = 3000
 epochs = 50
 
 data_dir = 'data/poetry/'
@@ -39,7 +36,7 @@ def train(data, model):
                 pointer += 1
                 train_loss, _, _ = sess.run([model.cost, model.final_state, model.train_op], feed_dict=feed_dict)
                 sys.stdout.write('\r')
-                info = "{}/{} (epoch {}) | train_loss {:.3f}" \
+                info = "{}/{} (epoch {}) | train_loss {:.5f}" \
                     .format(epoch * data.n_size + batche,
                             epochs * data.n_size, epoch, train_loss)
                 sys.stdout.write(info)
@@ -50,16 +47,36 @@ def train(data, model):
                     saver.save(sess, checkpoint_path, global_step=n)
                     sys.stdout.write('\n')
                     print("model saved to {}".format(checkpoint_path))
-            sys.stdout.write('\n')
+                    print(generate_text(data, sess, model))
+            sys.stdout.write('\n')            
+
+
+def generate_text(data, sess, model, begin_char=''):
+    poem = begin_char
+    head = BEGIN_CHAR
+    x = np.array([list(map(data.char2id, head))])
+    state = sess.run(model.cell.zero_state(1, tf.float32))
+    feed_dict = {model.x_tf: x, model.initial_state: state}
+    [probs, state] = sess.run([model.probs, model.final_state], feed_dict)
+    word = to_word(probs[-1])
+    while word != END_CHAR:
+        poem += word
+        x = np.zeros((1, 1))
+        x[0, 0] = data.char2id(word)
+        [probs, state] = sess.run([model.probs, model.final_state],
+                                  {model.x_tf: x, model.initial_state: state})
+        word = to_word(probs[-1])
+    print(poem)
+    return poem
+
+def to_word(weights):
+    t = np.cumsum(weights)
+    s = np.sum(weights)
+    sa = int(np.searchsorted(t, np.random.rand(1) * s))
+    return data.id2char(sa)
 
 
 def sample(data, model, head=u''):
-    def to_word(weights):
-        t = np.cumsum(weights)
-        s = np.sum(weights)
-        sa = int(np.searchsorted(t, np.random.rand(1) * s))
-        return data.id2char(sa)
-
     for word in head:
         if word not in data.words:
             return u'{} 不在字典中'.format(word)
@@ -69,7 +86,6 @@ def sample(data, model, head=u''):
 
         saver = tf.train.Saver(tf.global_variables())
         model_file = tf.train.latest_checkpoint(model_dir)
-        # print(model_file)
         saver.restore(sess, model_file)
 
         if head:
@@ -92,21 +108,7 @@ def sample(data, model, head=u''):
                 poem += word
             return poem[1:]
         else:
-            poem = ''
-            head = BEGIN_CHAR
-            x = np.array([list(map(data.char2id, head))])
-            state = sess.run(model.cell.zero_state(1, tf.float32))
-            feed_dict = {model.x_tf: x, model.initial_state: state}
-            [probs, state] = sess.run([model.probs, model.final_state], feed_dict)
-            word = to_word(probs[-1])
-            while word != END_CHAR:
-                poem += word
-                x = np.zeros((1, 1))
-                x[0, 0] = data.char2id(word)
-                [probs, state] = sess.run([model.probs, model.final_state],
-                                          {model.x_tf: x, model.initial_state: state})
-                word = to_word(probs[-1])
-            return poem
+            return generate_text(data, sess, model)
 
 
 def main():
