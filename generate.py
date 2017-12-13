@@ -58,18 +58,17 @@ def generate_text(data, sess, model, begin_char=''):
     state = sess.run(model.cell.zero_state(1, tf.float32))
     feed_dict = {model.x_tf: x, model.initial_state: state}
     [probs, state] = sess.run([model.probs, model.final_state], feed_dict)
-    word = to_word(probs[-1])
+    word = to_word(data, probs[-1])
     while word != END_CHAR:
         poem += word
         x = np.zeros((1, 1))
         x[0, 0] = data.char2id(word)
         [probs, state] = sess.run([model.probs, model.final_state],
                                   {model.x_tf: x, model.initial_state: state})
-        word = to_word(probs[-1])
-    print(poem)
+        word = to_word(data, probs[-1])
     return poem
 
-def to_word(weights):
+def to_word(data, weights):
     t = np.cumsum(weights)
     s = np.sum(weights)
     sa = int(np.searchsorted(t, np.random.rand(1) * s))
@@ -97,14 +96,14 @@ def sample(data, model, head=u''):
                 state = sess.run(model.cell.zero_state(1, tf.float32))
                 feed_dict = {model.x_tf: x, model.initial_state: state}
                 [probs, state] = sess.run([model.probs, model.final_state], feed_dict)
-                word = to_word(probs[-1])
+                word = to_word(data, probs[-1])
                 while word != u'，' and word != u'。':
                     poem += word
                     x = np.zeros((1, 1))
                     x[0, 0] = data.char2id(word)
                     [probs, state] = sess.run([model.probs, model.final_state],
                                               {model.x_tf: x, model.initial_state: state})
-                    word = to_word(probs[-1])
+                    word = to_word(data, probs[-1])
                 poem += word
             return poem[1:]
         else:

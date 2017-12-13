@@ -28,12 +28,13 @@ class Data:
             print("loading preprocessed files")
             self.load_preprocessed(vocab_file, tensor_file)
         self.create_batches()
-        print(self.words_size)
+        print('load data done')
+        # print(self.words_size)
 
-    def id2char(idx):
+    def id2char(self, idx):
         return self.vocab_id[idx]
 
-    def char2id(word):
+    def char2id(self, word):
         return self.vocab[word]
 
     def load_preprocessed(self, vocab_file, tensor_file):
@@ -44,6 +45,7 @@ class Data:
         self.vocab_id = dict(zip(range(len(self.chars)), self.chars))
         self.texts_vector = np.load(tensor_file)
         self.words_size = len(self.chars)
+        self.words = self.chars
 
 
     def preprocess(self, input_file, vocab_file, tensor_file):

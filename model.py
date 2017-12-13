@@ -5,8 +5,9 @@ import tensorflow.contrib.legacy_seq2seq as seq2seq
 
 class Model:
     def __init__(self, data, model='lstm', infer=False):
-        self.rnn_size = 256
+        self.rnn_size = 128
         self.n_layers = 2
+        print('build model')
 
         if infer:
             self.batch_size = 1
@@ -56,3 +57,4 @@ class Model:
 
         optimizer = tf.train.AdamOptimizer(self.learning_rate)
         self.train_op = optimizer.apply_gradients(zip(grads, tvars))
+        print('build model done')
