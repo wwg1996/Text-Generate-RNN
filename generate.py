@@ -8,19 +8,32 @@ import numpy as np
 import tensorflow as tf
 from model import Model
 from data_loader import Data
+import io
 
 BEGIN_CHAR = '<'
 END_CHAR = '>'
 UNKNOWN_CHAR = '*'
+
+
 epochs = 50
+num_layers = 3
+layers_size = 512
+batch_size = 64
 
 data_dir = 'data/poetry/'
 input_file = 'tang(simplified).txt'
 vocab_file = 'vocab_tang(simplified).pkl'
 tensor_file = 'tensor_tang(simplified).npy'
 
-model_dir = 'model/poetry/'
+novel_data_dir = 'data/novel/'
+novel_input_file = 'train_data.txt'
+novel_vocab_file = 'vocab.pkl'
+novel_tensor_file = 'tensor.npy'
 
+model_dir = 'model'
+novel_model_dir = 'model'
+
+clas = 'novel'
 
 def train(data, model):
     with tf.Session() as sess:
@@ -40,13 +53,28 @@ def train(data, model):
                     .format(epoch * data.n_size + batche,
                             epochs * data.n_size, epoch, train_loss)
                 sys.stdout.write(info)
+
                 # sys.stdout.flush()
-                if (epoch * data.n_size + batche) % 1000 == 0 \
+                if (epoch * data.n_size + batche) % 2000 == 0 \
                         or (epoch == epochs-1 and batche == data.n_size-1):
-                    checkpoint_path = os.path.join(model_dir, 'model.ckpt')
+                    checkpoint_path = os.path.join(model_dir, clas + '_model.ckpt')
                     saver.save(sess, checkpoint_path, global_step=n)
                     sys.stdout.write('\n')
                     print("model saved to {}".format(checkpoint_path))
+                if (epoch * data.n_size + batche) % 100 == 0 \
+                        or (epoch == epochs-1 and batche == data.n_size-1):                    
+                    pre = tf.argmax(
+                        sess.run(model.probs, feed_dict={model.x_tf: data.x_batches[pointer]}), 1)
+                    print(pre.shape)
+                    lis = ''
+                    words = list(map(lambda x: data.id2char(x), np.array(sess.run(pre))[:100]))
+                    for word in words:
+                        lis += word
+                    print(lis)
+                    with open('train_step.txt', 'a') as f:
+                        f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+                        print(f.write(', step: ' + str(epoch * data.n_size + batche) + ', ' + lis + '\n'))
+                                        
                     # print(generate_text(data, sess, model))
             sys.stdout.write('\n')
 
@@ -88,7 +116,7 @@ def sample(data, model, head=u''):
 
         if head:
             print('生成藏头诗 ---> ', head)
-            poem = BEGIN_CHAR
+            poem = BEGIN_CHAR + '《' + '》'
             for head_word in head:
                 poem += head_word
                 x = np.array([list(map(data.char2id, poem))])
@@ -113,28 +141,44 @@ def main():
     msg = """
             Usage:
             Training: 
-                python poetry_gen.py --mode train
+                python generate.py --mode train --clas novel
             Sampling:
-                python poetry_gen.py --mode sample --head 明月别枝惊鹊
+                python generate.py --mode sample --head 明月别枝惊鹊
             """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', type=str, default='sample',
+    parser.add_argument('--mode', type=str, default='',
                         help=u'usage: train or sample, sample is default')
     parser.add_argument('--head', type=str, default='',
                         help='生成藏头诗')
 
+    parser.add_argument('--clas', type=str, default='',
+                        help='novel or poetry')
+
     args = parser.parse_args()
 
     if args.mode == 'sample':
-        infer = True  # True
-        data = Data(data_dir, input_file, vocab_file, tensor_file)
-        model = Model(data=data, infer=infer)
+        infer = True
+        data = Data(data_dir, input_file, vocab_file, 
+            tensor_file, batch_size=batch_size)
+        model = Model(data=data, infer=infer, 
+            num_layers=num_layers, layers_size=layers_size)
         print(sample(data, model, head=args.head))
     elif args.mode == 'train':
         infer = False
-        data = Data(data_dir, input_file, vocab_file, tensor_file)
-        model = Model(data=data, infer=infer)
-        print(train(data, model))
+        clas = args.clas
+        if args.clas == 'novel':
+            data = Data(novel_data_dir, novel_input_file, 
+                novel_vocab_file, novel_tensor_file, 3000, batch_size=batch_size)
+            model = Model(data=data, infer=infer, 
+                num_layers=num_layers, layers_size=layers_size)
+            print(train(data, model))  
+        elif args.clas == 'poetry':
+            data = Data(data_dir, input_file, vocab_file, tensor_file, clas='poetry')
+            model = Model(data=data, infer=infer, 
+                num_layers=num_layers, layers_size=layers_size)
+            print(train(data, model))
+        else:
+            print(msg)
     else:
         print(msg)
 

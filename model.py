@@ -4,9 +4,10 @@ import tensorflow.contrib.legacy_seq2seq as seq2seq
 
 
 class Model:
-    def __init__(self, data, model='lstm', infer=False):
-        self.rnn_size = 512
-        self.n_layers = 2
+    def __init__(self, data, model='lstm', infer=False, 
+                layers_size=128, num_layers=2):
+        self.rnn_size = layers_size
+        self.n_layers = num_layers
         print('build model')
 
         if infer:
