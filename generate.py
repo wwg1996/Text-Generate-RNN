@@ -70,6 +70,7 @@ def train(data, model):
                     print(lis)
 
                     pre = tf.argmax(probs, 1)
+                    print(len(pre))
                     lis = '预测输出：\n'
                     words = list(map(data.id2char, np.array(sess.run(pre))[:100]))
                     for word in words:
