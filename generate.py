@@ -16,9 +16,10 @@ UNKNOWN_CHAR = '*'
 
 
 epochs = 50
-num_layers = 3
-layers_size = 512
-batch_size = 64
+num_layers = 2
+layers_size = 128
+batch_size = 4
+seq_len = 1000
 
 data_dir = 'data/poetry/'
 input_file = 'tang(simplified).txt'
@@ -38,7 +39,7 @@ clas = 'novel'
 def train(data, model):
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        saver = tf.train.Saver(tf.global_variables())
+        saver = tf.train.Saver(tf.global_variables(), max_to_keep=1)
         n = 0
         for epoch in range(epochs):
             sess.run(tf.assign(model.learning_rate, 0.002 * (0.97 ** epoch)))
@@ -47,7 +48,8 @@ def train(data, model):
                 n += 1
                 feed_dict = {model.x_tf: data.x_batches[pointer], model.y_tf: data.y_batches[pointer]}
                 pointer += 1
-                train_loss, _, _ = sess.run([model.cost, model.final_state, model.train_op], feed_dict=feed_dict)
+                train_loss, _, _, probs= sess.run(
+                    [model.cost, model.final_state, model.train_op, model.probs], feed_dict=feed_dict)
                 sys.stdout.write('\r')
                 info = "{}/{} (epoch {}) | train_loss {:.5f}" \
                     .format(epoch * data.n_size + batche,
@@ -55,27 +57,35 @@ def train(data, model):
                 sys.stdout.write(info)
 
                 # sys.stdout.flush()
+
+                if (epoch * data.n_size + batche) % 50 == 0 \
+                        or (epoch == epochs-1 and batche == data.n_size-1):
+                    
+                    sys.stdout.write('\n')
+
+                    lis = '训练样本：\n'
+                    words = list(map(data.id2char, data.x_batches[pointer][0][:100]))
+                    for i in words:
+                        lis += i
+                    print(lis)
+
+                    pre = tf.argmax(probs, 1)
+                    lis = '预测输出：\n'
+                    words = list(map(data.id2char, np.array(sess.run(pre))[:100]))
+                    for word in words:
+                        lis += word
+                    print(lis)
+
+                    with open('train_step.txt', 'a') as f:
+                        f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+                        f.write(', step: ' + str(epoch * data.n_size + batche) + ', ' + lis + '\n')
+
                 if (epoch * data.n_size + batche) % 2000 == 0 \
                         or (epoch == epochs-1 and batche == data.n_size-1):
                     checkpoint_path = os.path.join(model_dir, clas + '_model.ckpt')
                     saver.save(sess, checkpoint_path, global_step=n)
                     sys.stdout.write('\n')
                     print("model saved to {}".format(checkpoint_path))
-                if (epoch * data.n_size + batche) % 100 == 0 \
-                        or (epoch == epochs-1 and batche == data.n_size-1):                    
-                    pre = tf.argmax(
-                        sess.run(model.probs, feed_dict={model.x_tf: data.x_batches[pointer]}), 1)
-                    print(pre.shape)
-                    lis = ''
-                    words = list(map(lambda x: data.id2char(x), np.array(sess.run(pre))[:100]))
-                    for word in words:
-                        lis += word
-                    print(lis)
-                    with open('train_step.txt', 'a') as f:
-                        f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-                        print(f.write(', step: ' + str(epoch * data.n_size + batche) + ', ' + lis + '\n'))
-                                        
-                    # print(generate_text(data, sess, model))
             sys.stdout.write('\n')
 
 def generate_text(data, sess, model, begin_char=''):
@@ -168,12 +178,13 @@ def main():
         clas = args.clas
         if args.clas == 'novel':
             data = Data(novel_data_dir, novel_input_file, 
-                novel_vocab_file, novel_tensor_file, 3000, batch_size=batch_size)
+                novel_vocab_file, novel_tensor_file, seq_len=seq_len, batch_size=batch_size)
             model = Model(data=data, infer=infer, 
                 num_layers=num_layers, layers_size=layers_size)
             print(train(data, model))  
         elif args.clas == 'poetry':
-            data = Data(data_dir, input_file, vocab_file, tensor_file, clas='poetry')
+            data = Data(data_dir, input_file, vocab_file, 
+                tensor_file, clas='poetry', batch_size=batch_size)
             model = Model(data=data, infer=infer, 
                 num_layers=num_layers, layers_size=layers_size)
             print(train(data, model))
