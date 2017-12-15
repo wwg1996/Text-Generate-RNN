@@ -4,8 +4,7 @@ import argparse
 import sys
 import os
 
-#os.environ["CUDA_DEVICE_ORDER"] = ["PCI_BUS_ID"]
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+
 import time
 import numpy as np
 import tensorflow as tf
@@ -39,7 +38,7 @@ novel_model_dir = 'model'
 
 clas = 'novel'
 
-
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 def train(data, model):
     with tf.Session() as sess:
@@ -53,8 +52,9 @@ def train(data, model):
                 n += 1
                 feed_dict = {model.x_tf: data.x_batches[pointer], model.y_tf: data.y_batches[pointer]}
                 pointer += 1
-                train_loss, _, _, probs= sess.run(
-                    [model.cost, model.final_state, model.train_op, model.probs], feed_dict=feed_dict)
+                train_loss, _, _, pre, loss = sess.run(
+                    [model.cost, model.final_state, model.train_op, model.pre, model.cost], 
+                    feed_dict=feed_dict)
                 sys.stdout.write('\r')
                 info = "{}/{} (epoch {}) | train_loss {:.5f}" \
                     .format(epoch * data.n_size + batche,
@@ -62,7 +62,7 @@ def train(data, model):
                 sys.stdout.write(info)
 
                 # sys.stdout.flush()
-                '''
+                
                 if (epoch * data.n_size + batche) % 50 == 0 \
                         or (epoch == epochs-1 and batche == data.n_size-1):
                     
@@ -74,19 +74,18 @@ def train(data, model):
                         lis += i
                     print(lis)
 
-                    pre = tf.argmax(probs, 1)
-                    print(pre.shape)
-                    lis = '预测输出：\n'
-                    words = list(map(data.id2char, np.array(sess.run(pre)[:100])))
+                    lis = '\n预测输出：\n'
+                    words = list(map(data.id2char, pre[:100]))
                     for word in words:
                         lis += word
                     print(lis)
+                    print('\nloss: ', str(loss))
 
                     with open('train_step.txt', 'a') as f:
-                        f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-                        f.write(', step: ' + str(epoch * data.n_size + batche) + ', ' + lis + '\n')
-                '''
-                if (epoch * data.n_size + batche) % 500 == 0 \
+                        tim = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                        text = '{}, loss: {}, step: {}, {}\n'.format(tim, loss, epoch*data.n_size+batche, lis)
+                        f.write(text)
+                if (epoch * data.n_size + batche) % 1000 == 0 \
                         or (epoch == epochs-1 and batche == data.n_size-1):
                     checkpoint_path = os.path.join(model_dir, clas + '_model.ckpt')
                     saver.save(sess, checkpoint_path, global_step=n)

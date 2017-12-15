@@ -44,6 +44,7 @@ class Model:
         self.output = tf.reshape(outputs, [-1, self.rnn_size])
         self.logits = tf.matmul(self.output, softmax_w) + softmax_b
         self.probs = tf.nn.softmax(self.logits)
+        self.pre = tf.argmax(self.probs, 1)
         self.final_state = final_state
         pred = tf.reshape(self.y_tf, [-1])
         # seq2seq
