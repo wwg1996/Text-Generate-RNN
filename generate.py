@@ -17,11 +17,11 @@ END_CHAR = '>'
 UNKNOWN_CHAR = '*'
 
 
-epochs = 50
-num_layers = 3
+epochs = 1000
+num_layers = 2
 layers_size = 512
 batch_size = 32
-seq_len = 1000
+seq_len = 500
 
 data_dir = 'data/poetry/'
 input_file = 'tang(simplified).txt'
@@ -52,8 +52,8 @@ def train(data, model):
                 n += 1
                 feed_dict = {model.x_tf: data.x_batches[pointer], model.y_tf: data.y_batches[pointer]}
                 pointer += 1
-                train_loss, _, _, pre, loss = sess.run(
-                    [model.cost, model.final_state, model.train_op, model.pre, model.cost], 
+                train_loss, _, _, pre = sess.run(
+                    [model.cost, model.final_state, model.train_op, model.pre], 
                     feed_dict=feed_dict)
                 sys.stdout.write('\r')
                 info = "{}/{} (epoch {}) | train_loss {:.5f}" \
@@ -61,11 +61,15 @@ def train(data, model):
                             epochs * data.n_size, epoch, train_loss)
                 sys.stdout.write(info)
 
-                # sys.stdout.flush()
-                
-                if (epoch * data.n_size + batche) % 50 == 0 \
+                if (epoch * data.n_size + batche) % 2000 == 0 \
                         or (epoch == epochs-1 and batche == data.n_size-1):
-                    
+                    checkpoint_path = os.path.join(model_dir, clas + '_model.ckpt')
+                    saver.save(sess, checkpoint_path, global_step=n)
+                    sys.stdout.write('\n')
+                    print("model saved to {}".format(checkpoint_path))
+                
+                if (epoch * data.n_size + batche) % 100 == 0 \
+                        or (epoch == epochs-1 and batche == data.n_size-1):                    
                     sys.stdout.write('\n')
 
                     lis = '训练样本：\n'
@@ -79,18 +83,13 @@ def train(data, model):
                     for word in words:
                         lis += word
                     print(lis)
-                    print('\nloss: ', str(loss))
+                    print('\nloss: ', str(train_loss))
 
                     with open('train_step.txt', 'a') as f:
                         tim = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-                        text = '{}, loss: {}, step: {}, {}\n'.format(tim, loss, epoch*data.n_size+batche, lis)
+                        text = '{}, loss: {}, step: {}, {}\n'.format(tim, train_loss, epoch*data.n_size+batche, lis)
                         f.write(text)
-                if (epoch * data.n_size + batche) % 1000 == 0 \
-                        or (epoch == epochs-1 and batche == data.n_size-1):
-                    checkpoint_path = os.path.join(model_dir, clas + '_model.ckpt')
-                    saver.save(sess, checkpoint_path, global_step=n)
-                    sys.stdout.write('\n')
-                    print("model saved to {}".format(checkpoint_path))
+                
             sys.stdout.write('\n')
 
 def generate_text(data, sess, model, begin_char=''):
