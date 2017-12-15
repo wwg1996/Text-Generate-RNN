@@ -3,6 +3,9 @@
 import argparse
 import sys
 import os
+
+#os.environ["CUDA_DEVICE_ORDER"] = ["PCI_BUS_ID"]
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 import time
 import numpy as np
 import tensorflow as tf
@@ -16,9 +19,9 @@ UNKNOWN_CHAR = '*'
 
 
 epochs = 50
-num_layers = 2
-layers_size = 128
-batch_size = 4
+num_layers = 3
+layers_size = 512
+batch_size = 32
 seq_len = 1000
 
 data_dir = 'data/poetry/'
@@ -35,6 +38,8 @@ model_dir = 'model'
 novel_model_dir = 'model'
 
 clas = 'novel'
+
+
 
 def train(data, model):
     with tf.Session() as sess:
@@ -57,7 +62,7 @@ def train(data, model):
                 sys.stdout.write(info)
 
                 # sys.stdout.flush()
-
+                '''
                 if (epoch * data.n_size + batche) % 50 == 0 \
                         or (epoch == epochs-1 and batche == data.n_size-1):
                     
@@ -70,9 +75,9 @@ def train(data, model):
                     print(lis)
 
                     pre = tf.argmax(probs, 1)
-                    print(len(pre))
+                    print(pre.shape)
                     lis = '预测输出：\n'
-                    words = list(map(data.id2char, np.array(sess.run(pre))[:100]))
+                    words = list(map(data.id2char, np.array(sess.run(pre)[:100])))
                     for word in words:
                         lis += word
                     print(lis)
@@ -80,8 +85,8 @@ def train(data, model):
                     with open('train_step.txt', 'a') as f:
                         f.write(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
                         f.write(', step: ' + str(epoch * data.n_size + batche) + ', ' + lis + '\n')
-
-                if (epoch * data.n_size + batche) % 2000 == 0 \
+                '''
+                if (epoch * data.n_size + batche) % 500 == 0 \
                         or (epoch == epochs-1 and batche == data.n_size-1):
                     checkpoint_path = os.path.join(model_dir, clas + '_model.ckpt')
                     saver.save(sess, checkpoint_path, global_step=n)
