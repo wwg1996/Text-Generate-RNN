@@ -3,8 +3,6 @@
 import argparse
 import sys
 import os
-
-
 import time
 import numpy as np
 import tensorflow as tf
@@ -18,7 +16,7 @@ UNKNOWN_CHAR = '*'
 
 
 epochs = 1000
-num_layers = 2
+num_layers = 3
 layers_size = 512
 batch_size = 32
 seq_len = 500
@@ -34,11 +32,13 @@ novel_vocab_file = 'vocab.pkl'
 novel_tensor_file = 'tensor.npy'
 
 model_dir = 'model'
-novel_model_dir = 'model'
+
+if not os.path.exists(model_dir):
+    os.mkdir(model_dir)
 
 clas = 'novel'
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 def train(data, model):
     with tf.Session() as sess:
@@ -72,7 +72,7 @@ def train(data, model):
                         or (epoch == epochs-1 and batche == data.n_size-1):                    
                     sys.stdout.write('\n')
 
-                    lis = '训练样本：\n'
+                    lis = '\n训练样本：\n'
                     words = list(map(data.id2char, data.x_batches[pointer][0][:100]))
                     for i in words:
                         lis += i
