@@ -18,9 +18,9 @@ UNKNOWN_CHAR = '*'
 
 
 epochs = 1000
-num_layers = 2
+num_layers = 3
 layers_size = 512
-batch_size = 32
+batch_size = 64
 seq_len = 500
 
 data_dir = 'data/poetry/'
@@ -46,7 +46,7 @@ def train(data, model):
         saver = tf.train.Saver(tf.global_variables(), max_to_keep=1)
         n = 0
         for epoch in range(epochs):
-            sess.run(tf.assign(model.learning_rate, 0.002 * (0.97 ** epoch)))
+            sess.run(tf.assign(model.learning_rate, 0.01 * (0.99 ** epoch)))
             pointer = 0
             for batche in range(data.n_size):
                 n += 1
@@ -56,9 +56,9 @@ def train(data, model):
                     [model.cost, model.final_state, model.train_op, model.pre], 
                     feed_dict=feed_dict)
                 sys.stdout.write('\r')
-                info = "{}/{} (epoch {}) | train_loss {:.5f}" \
+                info = "{}/{} (epoch {}) | train_loss {:.5f} | learn_rate {:.5f}" \
                     .format(epoch * data.n_size + batche,
-                            epochs * data.n_size, epoch, train_loss)
+                            epochs * data.n_size, epoch, train_loss, sess.run(model.learning_rate))
                 sys.stdout.write(info)
 
                 if (epoch * data.n_size + batche) % 2000 == 0 \
