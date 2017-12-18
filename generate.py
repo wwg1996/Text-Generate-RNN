@@ -20,6 +20,15 @@ layers_size = 512
 batch_size = 64
 seq_len = 500
 
+with open('setting.ini', 'a') as f:
+    tim = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+    f.write(tim)
+    f.write('epochs: {}'.format(epochs))
+    f.write('num_layers: {}'.format(num_layers))
+    f.write('layers_size: {}'.format(layers_size))
+    f.write('batch_size: {}'.format(batch_size))
+    f.write('seq_len: {}'.format(seq_len))
+
 data_dir = 'data/poetry/'
 input_file = 'tang(simplified).txt'
 vocab_file = 'vocab_tang(simplified).pkl'
