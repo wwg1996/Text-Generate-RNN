@@ -14,7 +14,6 @@ BEGIN_CHAR = '<'
 END_CHAR = '>'
 UNKNOWN_CHAR = '*'
 
-
 epochs = 1000
 num_layers = 3
 layers_size = 512
@@ -37,19 +36,26 @@ if not os.path.exists(model_dir):
     os.mkdir(model_dir)
 
 clas = 'novel'
+is_continue_train = False
 
-# os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 def train(data, model):
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         saver = tf.train.Saver(tf.global_variables(), max_to_keep=1)
-        n = 0
-        for epoch in range(epochs):
-            sess.run(tf.assign(model.learning_rate, 0.01 * (0.99 ** epoch)))
+        start = 0
+        if is_continue_train:
+            model_file = tf.train.latest_checkpoint(model_dir)
+            saver.restore(sess, model_file)
+            start = model.global_step.eval() // data.n_size + 1
+            print('\nContinue train from epoch {}\n'.format(start))
+
+        for epoch in range(start, epochs+start):
+            sess.run(tf.assign(model.learning_rate, 0.01 * (0.97 ** epoch)))
             pointer = 0
             for batche in range(data.n_size):
-                n += 1
+                model.global_step.assign(epoch*data.n_size + batche).eval()
                 feed_dict = {model.x_tf: data.x_batches[pointer], model.y_tf: data.y_batches[pointer]}
                 pointer += 1
                 train_loss, _, _, pre = sess.run(
@@ -58,13 +64,14 @@ def train(data, model):
                 sys.stdout.write('\r')
                 info = "{}/{} (epoch {}) | train_loss {:.5f} | learn_rate {:.5f}" \
                     .format(epoch * data.n_size + batche,
-                            epochs * data.n_size, epoch, train_loss, sess.run(model.learning_rate))
+                            epochs * data.n_size, epoch, 
+                            train_loss, sess.run(model.learning_rate))
                 sys.stdout.write(info)
 
-                if (epoch * data.n_size + batche) % 2000 == 0 \
+                if (epoch * data.n_size + batche) % 200 == 0 \
                         or (epoch == epochs-1 and batche == data.n_size-1):
                     checkpoint_path = os.path.join(model_dir, clas + '_model.ckpt')
-                    saver.save(sess, checkpoint_path, global_step=n)
+                    saver.save(sess, checkpoint_path, global_step=model.global_step)
                     sys.stdout.write('\n')
                     print("model saved to {}".format(checkpoint_path))
                 
@@ -115,7 +122,6 @@ def to_word(data, weights):
     sa = int(np.searchsorted(t, np.random.rand(1) * s))
     return data.id2char(sa)
 
-
 def sample(data, model, head=u''):
     for word in head:
         if word not in data.words:
@@ -160,8 +166,8 @@ def main():
                 python generate.py --mode sample --head 明月别枝惊鹊
             """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--mode', type=str, default='',
-                        help=u'usage: train or sample, sample is default')
+    parser.add_argument('--mode', type=str, default='sample',
+                        help=u'usage: train, con-train or sample, sample is default')
     parser.add_argument('--head', type=str, default='',
                         help='生成藏头诗')
 
@@ -177,7 +183,10 @@ def main():
         model = Model(data=data, infer=infer, 
             num_layers=num_layers, layers_size=layers_size)
         print(sample(data, model, head=args.head))
-    elif args.mode == 'train':
+    elif args.mode == 'train' or args.mode == 'con-train':
+        global is_continue_train
+        if args.mode == 'con-train':
+            is_continue_train = True
         infer = False
         clas = args.clas
         if args.clas == 'novel':

@@ -59,4 +59,5 @@ class Model:
 
         optimizer = tf.train.AdamOptimizer(self.learning_rate)
         self.train_op = optimizer.apply_gradients(zip(grads, tvars))
+        self.global_step = tf.Variable(0, name='global_step', trainable=False)
         print('build model done')
