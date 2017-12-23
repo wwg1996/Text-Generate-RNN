@@ -84,7 +84,7 @@ def train(data, model):
                     sys.stdout.write('\n')
                     print("model saved to {}".format(checkpoint_path))
                 
-                if (epoch * data.n_size + batche) % 100 == 0 \
+                if (epoch * data.n_size + batche) % 200 == 0 \
                         or (epoch == epochs-1 and batche == data.n_size-1):                    
                     sys.stdout.write('\n')
 
@@ -197,6 +197,7 @@ def main():
         if args.mode == 'con-train':
             is_continue_train = True
         infer = False
+        global clas
         clas = args.clas
         if args.clas == 'novel':
             data = Data(novel_data_dir, novel_input_file, 
