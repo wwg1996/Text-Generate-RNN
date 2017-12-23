@@ -47,7 +47,7 @@ if not os.path.exists(model_dir):
 clas = 'novel'
 is_continue_train = False
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def train(data, model):
     with tf.Session() as sess:
@@ -66,7 +66,7 @@ def train(data, model):
             for batche in range(data.n_size):
                 model.global_step.assign(epoch*data.n_size + batche).eval()
                 feed_dict = {model.x_tf: data.x_batches[pointer], model.y_tf: data.y_batches[pointer]}
-                pointer += 1
+                
                 train_loss, _, _, pre = sess.run(
                     [model.cost, model.final_state, model.train_op, model.pre], 
                     feed_dict=feed_dict)
@@ -77,7 +77,7 @@ def train(data, model):
                             train_loss, sess.run(model.learning_rate))
                 sys.stdout.write(info)
 
-                if (epoch * data.n_size + batche) % 200 == 0 \
+                if (epoch * data.n_size + batche) % 1000 == 0 \
                         or (epoch == epochs-1 and batche == data.n_size-1):
                     checkpoint_path = os.path.join(model_dir, clas + '_model.ckpt')
                     saver.save(sess, checkpoint_path, global_step=model.global_step)
@@ -105,7 +105,7 @@ def train(data, model):
                         tim = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
                         text = '{}, loss: {}, step: {}, {}\n'.format(tim, train_loss, epoch*data.n_size+batche, lis)
                         f.write(text)
-                
+                pointer += 1 
             sys.stdout.write('\n')
 
 def generate_text(data, sess, model, begin_char=''):

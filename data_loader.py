@@ -142,5 +142,6 @@ class Data:
             ydata = np.copy(xdata)
             ydata[: ,:-1] = xdata[:, 1:]
             ydata[:, -1] = xdata[:, 0]
+            assert len(xdata) == MAX_LENGTH, len(xdata)
             self.x_batches.append(xdata)
             self.y_batches.append(ydata)
