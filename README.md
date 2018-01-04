@@ -1,4 +1,4 @@
-# poetry and novel generate
+# Poetry and novel generate
 
 Using RNN, LSTM automatically generates Chinese poetry texts and Chinese novel texts.
 
@@ -11,7 +11,7 @@ reference:
 ---
 
 ## Poetry
-data: https://github.com/chinese-poetry/chinese-poetry
+Data：https://github.com/chinese-poetry/chinese-poetry
 
  * 5.5万首唐诗
  * 26万首宋诗
@@ -22,7 +22,7 @@ data: https://github.com/chinese-poetry/chinese-poetry
 ---
 
 ## Novel
-data: [贼道三痴](https://baike.baidu.com/item/%E8%B4%BC%E9%81%93%E4%B8%89%E7%97%B4) history novels
+Data：[贼道三痴](https://baike.baidu.com/item/%E8%B4%BC%E9%81%93%E4%B8%89%E7%97%B4) history novels
 
  * 《上品寒士》
  * 《雅骚》
@@ -62,6 +62,7 @@ python generate.py --mode sample --clas poetry
 
 ```
 藏头诗生成效果：
+
 to do
 ```
 
@@ -71,24 +72,25 @@ to do
 python generate.py --mode sample --clas novel
 ```
 
-### train poetry
+### train 
+ * poetry 
+ ```
+    python generate.py --mode train --clas poetry
+ ```
 
-```
-python generate.py --mode train --clas poetry
-```
+ * novel
+ 
+ ```
+    python generate.py --mode train --clas novel
+ ```
 
-### train novel
-```
-python generate.py --mode train --clas novel
-```
+### continue train
+ * poetry
+ ```
+    python generate.py --mode con-train --clas poetry
+ ```
 
-### continue train poetry
-
-```
-python generate.py --mode con-train --clas poetry
-```
-
-### continue train novel
-```
-python generate.py --mode con-train --clas novel
-```
+ * novel
+ ```
+    python generate.py --mode con-train --clas novel
+ ```
