@@ -1,8 +1,8 @@
-# 诗歌及小说自动生成
+# poetry and novel generate
 
-利用RNN、LSTM自动生成中文诗歌文本和中文小说文本
+Using RNN, LSTM automatically generates Chinese poetry texts and Chinese novel texts.
 
- 参考：
+reference:
 
 * [char-rnn-tensorflow](https://github.com/sherjilozair/char-rnn-tensorflow)
 
@@ -10,8 +10,8 @@
 
 ---
 
-## 诗歌生成
-数据来源 https://github.com/chinese-poetry/chinese-poetry
+## Poetry
+data: https://github.com/chinese-poetry/chinese-poetry
 
  * 5.5万首唐诗
  * 26万首宋诗
@@ -21,14 +21,14 @@
 
 ---
 
-## 小说生成
-小说数据集来自[贼道三痴](https://baike.baidu.com/item/%E8%B4%BC%E9%81%93%E4%B8%89%E7%97%B4)的三本历史小说
+## Novel
+data: [贼道三痴](https://baike.baidu.com/item/%E8%B4%BC%E9%81%93%E4%B8%89%E7%97%B4) history novels
 
  * 《上品寒士》
  * 《雅骚》
  * 《清客》
 
-## 使用
+## USE
 ### requests
  * [python 3.5](https://www.python.org/downloads/)
  * [tensorflow](https://www.tensorflow.org/install/) (version >= 1.4)
@@ -39,14 +39,14 @@
 git clone https://github.com/Stardust-/Text-Generate-RNN.git
 ```
 
-### sample
-诗词生成
+### sample poetry
 ```
 python generate.py --mode sample --clas poetry
 ```
 
-#### 整首诗生成效果
 ```
+整首诗生成效果：
+
 《擣练绯》 
 噀景抱松草，清风吹颈人。皇军学夸便，和望忆皇恩。砌遍春来老，浮烟菊气长。
 
@@ -60,34 +60,35 @@ python generate.py --mode sample --clas poetry
 杜鹃筵豁头，忽认巴南天。阴有云斋趣，遥深愁梦梦。髫来住未得，谁屈骏鸟飞。羽檄紫人接，栖景不遑离。遽白李四子，牀余风上船。去名无真州，无复无戡情。柳色自清日，冰毫华素长。所，空木涩。乔楼块盈象，访道想斾浓。白石贫天分，深宫鹤子清。惟应意非时，有事感儒师。
 ```
 
-#### 藏头诗生成效果
 ```
+藏头诗生成效果：
 to do
 ```
 
+### sample novel
 
-小说生成
 ```
 python generate.py --mode sample --clas novel
 ```
 
+### train poetry
 
-### train
-诗词训练
 ```
 python generate.py --mode train --clas poetry
 ```
-小说训练 
+
+### train novel
 ```
 python generate.py --mode train --clas novel
 ```
 
-### continue train
-诗词
+### continue train poetry
+
 ```
 python generate.py --mode con-train --clas poetry
 ```
-小说
+
+### continue train novel
 ```
 python generate.py --mode con-train --clas novel
 ```
