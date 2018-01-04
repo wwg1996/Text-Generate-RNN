@@ -125,13 +125,14 @@ def generate_text(data, sess, model, begin_char=''):
         word = to_word(data, probs[-1])
     return poem
 
+
 def to_word(data, weights):
     t = np.cumsum(weights)
     s = np.sum(weights)
     sa = int(np.searchsorted(t, np.random.rand(1) * s))
     return data.id2char(sa)
 
-def sample(data, model, head=u''):
+def sample(data, model, head=u'', clas, start=''):
     for word in head:
         if word not in data.words:
             return u'{} 不在字典中'.format(word)
@@ -172,26 +173,39 @@ def main():
             Training: 
                 python generate.py --mode train --clas novel
             Sampling:
-                python generate.py --mode sample --head 明月别枝惊鹊
+                python generate.py --mode sample --start 两个黄鹂鸣翠柳
             """
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', type=str, default='sample',
-                        help=u'usage: train, con-train or sample, sample is default')
-    parser.add_argument('--head', type=str, default='',
-                        help='生成藏头诗')
+                        help='usage: train, con-train or sample, sample is default')
 
-    parser.add_argument('--clas', type=str, default='',
-                        help='novel or poetry')
+    parser.add_argument('--clas', type=str, default='poetry',
+                        help='novel or poetry, poetry is default')
+
+    parser.add_argument('--start', type=str, default='',
+                        help='')
+
+    parser.add_argument('--head', type=str, default='',
+                        help='')
 
     args = parser.parse_args()
 
     if args.mode == 'sample':
         infer = True
-        data = Data(data_dir, input_file, vocab_file, 
+        if args.clas == 'novel':            
+            data = Data(novel_data_dir, novel_input_file, novel_vocab_file, 
+            novel_tensor_file, batch_size=batch_size)
+            model = Model(data=data, infer=infer, 
+                num_layers=num_layers, layers_size=layers_size)
+        else:
+            data = Data(data_dir, input_file, vocab_file, 
             tensor_file, batch_size=batch_size)
-        model = Model(data=data, infer=infer, 
-            num_layers=num_layers, layers_size=layers_size)
-        print(sample(data, model, head=args.head))
+            model = Model(data=data, infer=infer, 
+                num_layers=num_layers, layers_size=layers_size)
+
+        print(sample(data, model, head=args.head, cals=args.clas, start=args.start))
+
     elif args.mode == 'train' or args.mode == 'con-train':
         global is_continue_train
         if args.mode == 'con-train':
@@ -199,6 +213,7 @@ def main():
         infer = False
         global clas
         clas = args.clas
+
         if args.clas == 'novel':
             data = Data(novel_data_dir, novel_input_file, 
                 novel_vocab_file, novel_tensor_file, seq_len=seq_len, batch_size=batch_size)
