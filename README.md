@@ -29,15 +29,10 @@ Data：[贼道三痴](https://baike.baidu.com/item/%E8%B4%BC%E9%81%93%E4%B8%89%E
  * 《清客》
 
 ## USE
-### requests
+### requirements
  * [python 3.5](https://www.python.org/downloads/)
  * [tensorflow](https://www.tensorflow.org/install/) (version >= 1.4)
  * numpy
-
-### clone
-```
-git clone https://github.com/Stardust-/Text-Generate-RNN.git
-```
 
 ### sample poetry
 ```
