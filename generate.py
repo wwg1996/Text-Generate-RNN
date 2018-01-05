@@ -16,8 +16,8 @@ UNKNOWN_CHAR = '*'
 
 epochs = 1000
 num_layers = 3
-layers_size = 512
-batch_size = 64
+layers_size = 128
+batch_size = 1
 seq_len = 500
 
 with open('setting.ini', 'a') as f:
@@ -47,7 +47,7 @@ if not os.path.exists(model_dir):
 clas = 'novel'
 is_continue_train = False
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 def train(data, model):
     with tf.Session() as sess:
@@ -108,22 +108,33 @@ def train(data, model):
                 pointer += 1 
             sys.stdout.write('\n')
 
-def generate_text(data, sess, model, begin_char=''):
-    poem = begin_char
-    head = BEGIN_CHAR
-    x = np.array([list(map(data.char2id, head))])
+def generate_text(data, sess, model, begin_char='', clas='novel', num=0):
+    text = begin_char
     state = sess.run(model.cell.zero_state(1, tf.float32))
-    feed_dict = {model.x_tf: x, model.initial_state: state}
-    [probs, state] = sess.run([model.probs, model.final_state], feed_dict)
-    word = to_word(data, probs[-1])
-    while word != END_CHAR:
-        poem += word
-        x = np.zeros((1, 1))
-        x[0, 0] = data.char2id(word)
-        [probs, state] = sess.run([model.probs, model.final_state],
-                                  {model.x_tf: x, model.initial_state: state})
+    idx = 0
+    if clas == 'poetry':
+        head = BEGIN_CHAR
+        x = np.array([list(map(data.char2id, head))])
+        feed_dict = {model.x_tf: x, model.initial_state: state}
+        [probs, state] = sess.run([model.probs, model.final_state], feed_dict)
         word = to_word(data, probs[-1])
-    return poem
+        while word != END_CHAR:
+            text += word
+            x = np.zeros((1, 1))
+            x[0, 0] = data.char2id(word)
+            [probs, state] = sess.run([model.probs, model.final_state],
+                                      {model.x_tf: x, model.initial_state: state})
+            word = to_word(data, probs[-1])
+    else:
+        while idx < num:
+            assert len(text) > 0, 'start text length must > 0'
+            x = np.array([list(map(data.char2id, text))])
+            [probs, state] = sess.run([model.probs, model.final_state],
+                                      {model.x_tf: x, model.initial_state: state})
+            word = to_word(data, probs[-1])
+            text += word
+
+    return text
 
 
 def to_word(data, weights):
@@ -132,7 +143,7 @@ def to_word(data, weights):
     sa = int(np.searchsorted(t, np.random.rand(1) * s))
     return data.id2char(sa)
 
-def sample(data, model, head=u'', clas, start=''):
+def sample(data, model, head=u'', clas='novel', start='', num=0):
     for word in head:
         if word not in data.words:
             return u'{} 不在字典中'.format(word)
@@ -146,25 +157,27 @@ def sample(data, model, head=u'', clas, start=''):
 
         if head:
             print('生成藏头诗 ---> ', head)
-            poem = BEGIN_CHAR + '《' + '》'
+            text = BEGIN_CHAR + '《' + '》'
+            text = ''
             for head_word in head:
-                poem += head_word
-                x = np.array([list(map(data.char2id, poem))])
+                text += head_word
+                x = np.array([list(map(data.char2id, text))])
                 state = sess.run(model.cell.zero_state(1, tf.float32))
                 feed_dict = {model.x_tf: x, model.initial_state: state}
                 [probs, state] = sess.run([model.probs, model.final_state], feed_dict)
                 word = to_word(data, probs[-1])
                 while word != u'，' and word != u'。':
-                    poem += word
+                    text += word
                     x = np.zeros((1, 1))
                     x[0, 0] = data.char2id(word)
                     [probs, state] = sess.run([model.probs, model.final_state],
                                               {model.x_tf: x, model.initial_state: state})
                     word = to_word(data, probs[-1])
-                poem += word
-            return poem[1:]
+                text += word
+            return text
+            return text[1:]
         else:
-            return generate_text(data, sess, model)
+            return generate_text(data, sess, model, start, clas, num)
 
 
 def main():
@@ -173,7 +186,8 @@ def main():
             Training: 
                 python generate.py --mode train --clas novel
             Sampling:
-                python generate.py --mode sample --start 两个黄鹂鸣翠柳
+                python generate.py --mode sample --clas poetry --start 两个黄鹂鸣翠柳
+                python generate.py --mode sample --clas novel --start --num 200 两个黄鹂鸣翠柳
             """
 
     parser = argparse.ArgumentParser()
@@ -188,6 +202,9 @@ def main():
 
     parser.add_argument('--head', type=str, default='',
                         help='')
+
+    parser.add_argument('--num', type=int,
+                        help='generation word number ')
 
     args = parser.parse_args()
 
@@ -204,7 +221,7 @@ def main():
             model = Model(data=data, infer=infer, 
                 num_layers=num_layers, layers_size=layers_size)
 
-        print(sample(data, model, head=args.head, cals=args.clas, start=args.start))
+        print(sample(data, model, head=args.head, cals=args.clas, start=args.start, num=args.num))
 
     elif args.mode == 'train' or args.mode == 'con-train':
         global is_continue_train
