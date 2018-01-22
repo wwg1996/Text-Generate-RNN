@@ -89,3 +89,4 @@ python generate.py --mode sample --clas novel
  ```
     python generate.py --mode con-train --clas novel
  ```
+ #### If this has some help for you, star is a good reward ^-^
