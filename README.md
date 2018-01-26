@@ -2,12 +2,6 @@
 
 Using RNN, LSTM automatically generates Chinese poetry texts and Chinese novel texts.
 
-reference:
-
-* [char-rnn-tensorflow](https://github.com/sherjilozair/char-rnn-tensorflow)
-
-* [RNN_poetry_generator](https://github.com/wzyonggege/RNN_poetry_generator)
-
 ---
 
 ## Poetry
@@ -89,4 +83,12 @@ python generate.py --mode sample --clas novel
  ```
     python generate.py --mode con-train --clas novel
  ```
+ 
+ 
+### reference:
+
+* [char-rnn-tensorflow](https://github.com/sherjilozair/char-rnn-tensorflow)
+
+* [RNN_poetry_generator](https://github.com/wzyonggege/RNN_poetry_generator)
+
  ### If this has some help for you, star is a good reward ^-^
